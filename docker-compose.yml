@@ -10,15 +10,17 @@ services:
     command: sh -c "cd web && npm install && npm run dev"
     ports:
       - "80:3000"
+    container_name: node-container
 
   golang:
     image: golang:1.18.2
     ports:
       - 8080:8080
 #    command: sh -c "cd /go/src && go mod init gidai-pastprob && go run ./api/cmd/main.go"
-    command: sh -c "cd /go/src && go mod init gidai-pastprob && go run ./api/cmd/main.go"
+    command: sh -c "cd /go/src/api && go run ./cmd/main.go"
     volumes:
       - ./api:/go/src/api
+    container_name: golang-container
 
   mysql:
     image: mysql:8.0
@@ -31,6 +33,7 @@ services:
       - db-data:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: "root"
+    container_name: mysql-container
 
 volumes:
   db-data:
