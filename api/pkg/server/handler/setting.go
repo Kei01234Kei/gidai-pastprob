@@ -28,8 +28,7 @@ func GetFacultyData() http.HandlerFunc {
 		})
 		res := mutchAddr.FindStringSubmatch(string(data))
 		facultyID.Id, _ = strconv.Atoi(res[0])
-
-		dsn := "root:root@tcp(localhost:3306)/gidai_pastprob?charset=utf8&parseTime=true&loc=Asia%2FTokyo"
+		dsn := "root:root@tcp(mysql-container:3306)/gidai_pastprob?charset=utf8&parseTime=true&loc=Asia%2FTokyo"
 		db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 		if err != nil {
 			panic(err)
@@ -40,6 +39,36 @@ func GetFacultyData() http.HandlerFunc {
 			panic(err)
 		}
 		data, err = json.Marshal(facultyData)
+		fmt.Println(string(data))
+		w.Write(data)
+	}
+}
+
+func GetProblemURLs() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var facultyID FacultyID
+		id, err := strconv.Atoi(r.URL.Query().Get("faculty_id"))
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("id", id)
+		facultyID.Id = id
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(facultyID.Id)
+		dsn := "root:root@tcp(mysql-container:3306)/gidai_pastprob?charset=utf8&parseTime=true&loc=Asia%2FTokyo"
+		db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		if err != nil {
+			panic(err)
+		}
+		problemData := []*ProblemData{}
+		err = db.Table("problems").Select("*").Where("faculty_id", facultyID.Id).Find(&problemData).Error
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("problemData: ", problemData)
+		data, err := json.Marshal(problemData)
 		fmt.Println(string(data))
 		w.Write(data)
 	}
@@ -90,4 +119,13 @@ type FacultyData struct {
 	FacultyID  int    `json:"faculty_id"`
 	Faculty    string `json:"faculty"`
 	Department string `json:"department"`
+}
+
+type ProblemData struct {
+	SubjectName string `json:"subject_name"`
+	Teacher     string `json:"teacher"`
+	Year        int    `json:"year"`
+	StudentYear int    `json:"student_year"`
+	FacultyID   int    `json:"faculty_id"`
+	URL         string `json:"url"`
 }
